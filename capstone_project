@@ -1,0 +1,322 @@
+--How many customers do we have in the data?--
+SELECT 
+  COUNT(*) AS count_of_customers 
+FROM 
+  customers 
+  
+  
+--What was the city with the most profit for the company in 2015?--
+SELECT 
+  o.shipping_city, 
+  SUM(od.order_profits) 
+FROM 
+  orders AS o 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+WHERE 
+  DATE_PART('year', o.order_date) = 2015 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC 
+  
+  
+--In 2015, what was the most profitable city's profit?--
+SELECT 
+  o.shipping_city, 
+  SUM(od.order_profits) 
+FROM 
+  orders AS o 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+WHERE 
+  DATE_PART('year', o.order_date) = 2015 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC 
+  
+--How many different cities do we have in the data?--
+SELECT 
+  COUNT(DISTINCT shipping_city) AS distinct_cities 
+FROM 
+  orders 
+  
+ --Show the total spent by customers from low to high.--
+SELECT 
+  c.customer_id, 
+  c.customer_name, 
+  SUM(od.order_sales) AS total_amount_spent 
+FROM 
+  customers AS c 
+  JOIN orders AS o ON c.customer_id = o.customer_id 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+GROUP BY 
+  1, 
+  2 
+ORDER BY 
+  3 
+  
+ --What is the most profitable city in the State of Tennessee?--
+SELECT 
+  o.shipping_city, 
+  SUM(od.order_profits) 
+FROM 
+  orders AS o 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+WHERE 
+  shipping_state = 'Tennessee' 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC 
+  
+ --What’s the average annual profit for that city across all years?--
+  WITH t1 AS (
+    SELECT 
+      o.shipping_city, 
+      DATE_PART('year', o.order_date), 
+      SUM(od.order_profits) AS annual_profit 
+    FROM 
+      orders AS o 
+      JOIN order_details AS od ON o.order_id = od.order_id 
+    WHERE 
+      shipping_city = 'Lebanon' 
+    GROUP BY 
+      1, 
+      2
+  ) 
+SELECT 
+  t1.shipping_city, 
+  AVG(t1.annual_profit) AS average_annual_profit 
+FROM 
+  t1 
+GROUP BY 
+  1 
+  
+ --What is the distribution of customer types in the data?--
+SELECT 
+  customer_segment, 
+  COUNT(*) AS count 
+FROM 
+  customers 
+GROUP BY 
+  1 
+  
+ --What’s the most profitable product category on average in Iowa across all years?--
+  WITH t1 AS (
+    SELECT 
+      p.product_category, 
+      DATE_PART('year', o.order_date), 
+      SUM(od.order_profits) AS total_order_profits 
+    FROM 
+      product AS p 
+      JOIN order_details AS od ON p.product_id = od.product_id 
+      JOIN orders AS o ON od.order_id = o.order_id 
+    WHERE 
+      o.shipping_state = 'Iowa' 
+    GROUP BY 
+      1, 
+      2
+  ) 
+SELECT 
+  t1.product_category, 
+  AVG(t1.total_order_profits) AS average_profits 
+FROM 
+  t1 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC;
+  
+--What is the most popular product in that category across all states in 2016?--
+SELECT 
+  p.product_name, 
+  SUM(od.quantity) AS amount_of_products 
+FROM 
+  product AS p 
+  JOIN order_details AS od ON p.product_id = od.product_id 
+  JOIN orders AS o ON od.order_id = o.order_id 
+WHERE 
+  DATE_PART('year', o.order_date) = 2016 
+  AND p.product_category = 'Furniture' 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC 
+  
+--Which customer got the most discount in the data? (in total amount)--
+SELECT 
+  c.customer_id, 
+  c.customer_name, 
+  SUM(
+    od.order_sales /(1 - od.order_discount) * od.order_discount
+  ) AS total_discount_amount 
+FROM 
+  customers AS c 
+  JOIN orders AS o ON c.customer_id = o.customer_id 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+GROUP BY 
+  1, 
+  2 
+ORDER BY 
+  3 DESC;
+  
+--How widely did monthly profits vary in 2018?--
+SELECT 
+  date, 
+  month_total, 
+  LAG(month_total) OVER (
+    ORDER BY 
+      date
+  ), 
+  LEAD(month_total) OVER (
+    ORDER BY 
+      date
+  ), 
+  month_total - LAG(month_total) OVER (
+    ORDER BY 
+      date
+  ) AS monthly_profit_difference 
+FROM 
+  (
+    SELECT 
+      DATE_TRUNC('month', o.order_date) AS date, 
+      SUM(od.order_profits) AS month_total 
+    FROM 
+      orders AS o 
+      JOIN order_details AS od ON o.order_id = od.order_id 
+    WHERE 
+      DATE_PART('year', o.order_date) = 2018 
+    GROUP BY 
+      1 
+    ORDER BY 
+      1
+  ) AS t1 --Which order was the highest in 2015?--
+SELECT 
+  o.order_id, 
+  SUM(od.order_sales) AS total_sales 
+FROM 
+  orders AS o 
+  JOIN order_details AS od ON o.order_id = od.order_id 
+WHERE 
+  DATE_PART('year', o.order_date) = 2015 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC 
+  
+--What was the rank of each city in the East region in 2015?--
+SELECT 
+  shipping_city, 
+  total_amount, 
+  ROW_NUMBER() OVER (
+    ORDER BY 
+      total_amount DESC
+  ) AS rank 
+FROM 
+  (
+    SELECT 
+      o.shipping_city, 
+      SUM(quantity) AS total_amount 
+    FROM 
+      orders AS o 
+      JOIN order_details AS od ON o.order_id = od.order_id 
+    WHERE 
+      DATE_PART('year', o.order_date) = 2015 
+      AND o.shipping_region = 'East' 
+    GROUP BY 
+      1
+  ) AS T1 
+  
+ --Display customer names for customers who are in the segment ‘Consumer’ or ‘Corporate.’ How many customers are there in total?--
+SELECT 
+  COUNT(DISTINCT customer_name) 
+FROM 
+  (
+    SELECT 
+      customer_name 
+    FROM 
+      customers 
+    WHERE 
+      customer_segment = 'Consumer' 
+      OR customer_segment = 'Corporate' 
+    GROUP BY 
+      1
+  ) AS t1 
+  
+ --Calculate the difference between the largest and smallest order quantities for product id ‘100.’--
+SELECT 
+  MIN(quantity), 
+  MAX(quantity), 
+  MAX(quantity) - MIN(quantity) AS quantity_difference 
+FROM 
+  order_details 
+WHERE 
+  product_id = 100 
+  
+--Calculate the percent of products that are within the category ‘Furniture.’--
+SELECT 
+  product_category, 
+  number, 
+  ROUND(
+    (
+      number / SUM(number) OVER ()
+    ) * 100, 
+    2
+  ) AS percent 
+FROM 
+  (
+    SELECT 
+      product_category, 
+      CAST(
+        COUNT(*) AS NUMERIC
+      ) AS number 
+    FROM 
+      product 
+    GROUP BY 
+      1
+  ) AS t1 
+  
+--Display the number of duplicate products based on their product manufacturer.           
+  Example : A product with an identical product manufacturer can be considered a duplicate.--
+SELECT 
+  product_manufacturer, 
+  COUNT(*) AS number_of_duplicate 
+FROM 
+  product 
+GROUP BY 
+  1 
+  
+--Show the product_subcategory and the total number of products in the subcategory.
+  --Show the order from most to least products and then by product_subcategory name ascending.--         
+SELECT 
+  product_subcategory, 
+  COUNT(*) AS number_of_products 
+FROM 
+  product 
+GROUP BY 
+  1 
+ORDER BY 
+  2 DESC, 
+  1 
+  
+--Show the product_id(s), the sum of quantities, where the total sum of its product quantities is greater than or equal to 100.--
+SELECT 
+  p.product_id, 
+  SUM(od.quantity) AS total_quantity 
+FROM 
+  product AS p 
+  JOIN order_details AS od ON p.product_id = od.product_id 
+GROUP BY 
+  1 
+HAVING 
+  SUM(od.quantity) >= 100 
+  
+  
+--Join all database tables into one dataset that includes all unique columns and download it as a .csv file.--
+SELECT 
+  * 
+FROM 
+  customers AS c FULL 
+  JOIN orders AS o ON c.customer_id = o.customer_id FULL 
+  JOIN order_details AS od ON o.order_id = od.order_id FULL 
+  JOIN product AS p ON od.product_id = p.product_id
