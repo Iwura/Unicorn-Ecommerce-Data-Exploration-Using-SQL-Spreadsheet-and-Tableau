@@ -11,7 +11,7 @@ The average profit trend over time for Unicorn shows that 2018 was the worst-per
 https://docs.google.com/spreadsheets/d/1QvXO3I0hnKnSdLEQUFQHNUCfwp9ljZyb9TKjA7TtxBE/edit?usp=sharing
 
 # Taleau Public Visualization.
-https://public.tableau.com/app/profile/iwuchukwu.nwabueze
+https://public.tableau.com/app/profile/iwuchukwu.nwabueze/viz/UnicornE-CommerceDataExploration/Story1
 
 # Presentation Slides.
 https://docs.google.com/presentation/d/1hYYcCgyxMdLpFFnbr93ZSGMURPi3yUarSsTLPFtr_no/edit?usp=sharing
